@@ -28,4 +28,20 @@ public class PostsController : Controller
     {
         return Ok(_posts);
     }
+
+    [HttpPost(ApiRoutes.Posts.Create)]
+    public IActionResult Create([FromBody] Post post)
+    {
+        if (string.IsNullOrEmpty(post.Id))
+        {
+            post.Id = Guid.NewGuid().ToString();
+        }
+
+        _posts.Add(post);
+
+        var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
+        var locationUrl = $"{baseUrl}/{ApiRoutes.Posts.Get.Replace("{id}", post.Id)}";
+
+        return Created(locationUrl, post);
+    }
 }
