@@ -1,5 +1,3 @@
-using System;
-
 namespace blog_api_jwt.Domain;
 
 public class Post
