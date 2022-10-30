@@ -3,6 +3,8 @@ using blog_api_jwt.Domain;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using blog_api_jwt.Contracts.v1.Requests;
+using blog_api_jwt.Contracts.v1.Responses;
 
 namespace blog_api_jwt.Controllers.v1;
 
@@ -30,8 +32,13 @@ public class PostsController : Controller
     }
 
     [HttpPost(ApiRoutes.Posts.Create)]
-    public IActionResult Create([FromBody] Post post)
+    public IActionResult Create([FromBody] CreatePostRequest request)
     {
+        var post = new Post
+        {
+            Id = request.Id
+        };
+
         if (string.IsNullOrEmpty(post.Id))
         {
             post.Id = Guid.NewGuid().ToString();
@@ -42,6 +49,11 @@ public class PostsController : Controller
         var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
         var locationUrl = $"{baseUrl}/{ApiRoutes.Posts.Get.Replace("{id}", post.Id)}";
 
-        return Created(locationUrl, post);
+        var response = new PostResponse
+        {
+            Id = post.Id
+        };
+
+        return Created(locationUrl, response);
     }
 }
