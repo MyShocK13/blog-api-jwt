@@ -1,64 +1,88 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using blog_api_jwt.Domain;
 using blog_api_jwt.Services.Interfaces;
+using Dapper;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
 
 namespace blog_api_jwt.Services;
 
 class PostService : IPostService
 {
-    private readonly List<Post> _posts;
+    private readonly string _connectionString;
 
-    public PostService()
+    public PostService(IConfiguration configuration)
     {
-        _posts = new List<Post>();
-
-        for (int i = 0; i < 5; i++)
-        {
-            _posts.Add(new Post
-            {
-                Id = Guid.NewGuid(),
-                Name = $"Post Name {i}"
-            });
-        }
+        _connectionString = configuration.GetConnectionString("DefaultConnection");
     }
 
-    public bool DeletePost(Guid id)
+    public async Task<int> CreatePostAsync(Post post)
     {
-        var post = GetPostById(id);
+        using var connection = new SqliteConnection(_connectionString);
 
-        if (post is null)
-        {
-            return false;
-        }
+        await connection.OpenAsync();
 
-        _posts.Remove(post);
-        return true;
+        var query = $@"INSERT INTO posts (name)
+                       VALUES (@Name)
+                       RETURNING id;";
+
+        var id = await connection.QuerySingleAsync<int>(query, post);
+        return id;
     }
 
-    public Post? GetPostById(Guid id)
+    public async Task<bool> DeletePostAsync(int id)
     {
-        return _posts.SingleOrDefault(p => p.Id == id);
+        using var connection = new SqliteConnection(_connectionString);
+
+        await connection.OpenAsync();
+
+        var query = $@"DELETE FROM posts
+                       WHERE id = @Id";
+
+        var deleted = await connection.ExecuteAsync(query, new { Id = id });
+        return deleted == 1;
     }
 
-    public List<Post> GetPosts()
+    public async Task<Post?> GetPostByIdAsync(int id)
     {
-        return _posts;
+        using var connection = new SqliteConnection(_connectionString);
+
+        await connection.OpenAsync();
+
+        var query = $@"SELECT id, name
+                       FROM posts
+                       WHERE id = @Id";
+
+        var post = await connection.QuerySingleAsync<Post>(query, new { Id = id });
+        return post;
     }
 
-    public bool UpdatePost(Post post)
+    public async Task<List<Post>> GetPostsAsync()
     {
-        var exists = GetPostById(post.Id) is not null;
+        using var connection = new SqliteConnection(_connectionString);
 
-        if (!exists)
-        {
-            return false;
-        }
+        await connection.OpenAsync();
 
-        var index = _posts.FindIndex(p => p.Id == post.Id);
-        _posts[index] = post;
+        var query = $@"SELECT id, name
+                       FROM posts";
 
-        return true;
+        var categories = await connection.QueryAsync<Post>(query);
+        return categories.ToList();
+    }
+
+    public async Task<bool> UpdatePostAsync(Post post)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+
+        await connection.OpenAsync();
+
+        var query = $@"UPDATE posts SET
+                       name = @Name
+                       WHERE id = @Id";
+
+        var updated = await connection.ExecuteAsync(query, post);
+        return updated > 0;
     }
 }

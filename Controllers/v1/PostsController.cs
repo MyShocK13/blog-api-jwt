@@ -5,6 +5,7 @@ using System;
 using blog_api_jwt.Contracts.v1.Requests;
 using blog_api_jwt.Contracts.v1.Responses;
 using blog_api_jwt.Services.Interfaces;
+using System.Threading.Tasks;
 
 namespace blog_api_jwt.Controllers.v1;
 
@@ -17,10 +18,31 @@ public class PostsController : Controller
         _postService = postService;
     }
 
-    [HttpGet(ApiRoutes.Posts.Get)]
-    public IActionResult Get([FromRoute] Guid id)
+    [HttpPost(ApiRoutes.Posts.Create)]
+    public async Task<IActionResult> Create([FromBody] CreatePostRequest request)
     {
-        var post = _postService.GetPostById(id);
+        var post = new Post
+        {
+            Name = request.Name
+        };
+
+        var id = await _postService.CreatePostAsync(post);
+
+        var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
+        var locationUrl = $"{baseUrl}/{ApiRoutes.Posts.Get.Replace("{id}", id.ToString())}";
+
+        var response = new PostResponse
+        {
+            Id = id
+        };
+
+        return Created(locationUrl, response);
+    }
+
+    [HttpGet(ApiRoutes.Posts.Get)]
+    public async Task<IActionResult> Get([FromRoute] int id)
+    {
+        var post = await _postService.GetPostByIdAsync(id);
 
         if (post is null)
         {
@@ -31,39 +53,15 @@ public class PostsController : Controller
     }
 
     [HttpGet(ApiRoutes.Posts.GetAll)]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        return Ok(_postService.GetPosts());
-    }
+        var posts = await _postService.GetPostsAsync();
 
-    [HttpPost(ApiRoutes.Posts.Create)]
-    public IActionResult Create([FromBody] CreatePostRequest request)
-    {
-        var post = new Post
-        {
-            Id = request.Id
-        };
-
-        if (post.Id != Guid.Empty)
-        {
-            post.Id = Guid.NewGuid();
-        }
-
-        _postService.GetPosts().Add(post);
-
-        var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-        var locationUrl = $"{baseUrl}/{ApiRoutes.Posts.Get.Replace("{id}", post.Id.ToString())}";
-
-        var response = new PostResponse
-        {
-            Id = post.Id
-        };
-
-        return Created(locationUrl, response);
+        return Ok(posts);
     }
 
     [HttpPut(ApiRoutes.Posts.Update)]
-    public IActionResult Update([FromRoute] Guid id, [FromBody] UpdatePostRequest request)
+    public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdatePostRequest request)
     {
         var post = new Post
         {
@@ -71,7 +69,7 @@ public class PostsController : Controller
             Name = request.Name
         };
 
-        var updated = _postService.UpdatePost(post);
+        var updated = await _postService.UpdatePostAsync(post);
 
         if (!updated)
         {
@@ -82,9 +80,9 @@ public class PostsController : Controller
     }
 
     [HttpDelete(ApiRoutes.Posts.Delete)]
-    public IActionResult Delete([FromRoute] Guid id)
+    public async Task<IActionResult> Delete([FromRoute] int id)
     {
-        var deleted = _postService.DeletePost(id);
+        var deleted = await _postService.DeletePostAsync(id);
 
         if (!deleted)
         {
