@@ -24,6 +24,19 @@ class PostService : IPostService
         }
     }
 
+    public bool DeletePost(Guid id)
+    {
+        var post = GetPostById(id);
+
+        if (post is null)
+        {
+            return false;
+        }
+
+        _posts.Remove(post);
+        return true;
+    }
+
     public Post? GetPostById(Guid id)
     {
         return _posts.SingleOrDefault(p => p.Id == id);
@@ -36,10 +49,12 @@ class PostService : IPostService
 
     public bool UpdatePost(Post post)
     {
-        var exists = GetPostById(post.Id) != null;
+        var exists = GetPostById(post.Id) is not null;
 
         if (!exists)
+        {
             return false;
+        }
 
         var index = _posts.FindIndex(p => p.Id == post.Id);
         _posts[index] = post;
