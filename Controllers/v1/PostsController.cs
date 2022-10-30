@@ -61,4 +61,23 @@ public class PostsController : Controller
 
         return Created(locationUrl, response);
     }
+
+    [HttpPut(ApiRoutes.Posts.Update)]
+    public IActionResult Update([FromRoute] Guid id, [FromBody] UpdatePostRequest request)
+    {
+        var post = new Post
+        {
+            Id = id,
+            Name = request.Name
+        };
+
+        var updated = _postService.UpdatePost(post);
+
+        if (!updated)
+        {
+            return NotFound();
+        }
+
+        return Ok(post);
+    }
 }

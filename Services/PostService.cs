@@ -33,4 +33,17 @@ class PostService : IPostService
     {
         return _posts;
     }
+
+    public bool UpdatePost(Post post)
+    {
+        var exists = GetPostById(post.Id) != null;
+
+        if (!exists)
+            return false;
+
+        var index = _posts.FindIndex(p => p.Id == post.Id);
+        _posts[index] = post;
+
+        return true;
+    }
 }

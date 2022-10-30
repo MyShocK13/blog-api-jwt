@@ -8,4 +8,5 @@ public interface IPostService
 {
     Post? GetPostById(Guid id);
     List<Post> GetPosts();
+    bool UpdatePost(Post post);
 }
