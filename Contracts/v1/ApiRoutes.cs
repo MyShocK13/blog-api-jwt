@@ -14,4 +14,10 @@ public static class ApiRoutes
         public const string GetAll = Base + "/posts";
         public const string Update = Base + "/posts/{id}";
     }
+
+    public static class Identity
+    {
+        public const string Register = Base + "/identity/register";
+        public const string Login = Base + "/identity/login";
+    }
 }

@@ -32,6 +32,7 @@ builder.Services.AddIdentity<User, Role>(options =>
 builder.Services.AddTransient<IUserStore<User>, UserStore>();
 builder.Services.AddTransient<IRoleStore<Role>, RoleStore>();
 
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddSingleton<IPostService, PostService>();
 
 builder.Services.AddSingleton(jwtSettings);
