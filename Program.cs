@@ -1,9 +1,12 @@
 using System.Text;
+using blog_api_jwt.Data;
+using blog_api_jwt.Domain;
 using blog_api_jwt.Options;
 using blog_api_jwt.Services;
 using blog_api_jwt.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,8 +18,22 @@ var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = new JwtSettings();
 builder.Configuration.Bind(nameof(jwtSettings), jwtSettings);
 
-// Add services to the container.
+builder.Services.AddIdentity<User, Role>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = false;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireDigit = false;
+    })
+    .AddDefaultTokenProviders();
+
+builder.Services.AddTransient<IUserStore<User>, UserStore>();
+builder.Services.AddTransient<IRoleStore<Role>, RoleStore>();
+
 builder.Services.AddSingleton<IPostService, PostService>();
+
 builder.Services.AddSingleton(jwtSettings);
 
 builder.Services.AddControllers();
