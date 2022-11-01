@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,8 +25,8 @@ class PostService : IPostService
 
         await connection.OpenAsync();
 
-        var query = $@"INSERT INTO posts (name)
-                       VALUES (@Name)
+        var query = $@"INSERT INTO posts (name, userid)
+                       VALUES (@Name, @UserId)
                        RETURNING id;";
 
         var id = await connection.QuerySingleAsync<int>(query, post);
@@ -51,7 +52,7 @@ class PostService : IPostService
 
         await connection.OpenAsync();
 
-        var query = $@"SELECT id, name
+        var query = $@"SELECT id, name, userid
                        FROM posts
                        WHERE id = @Id";
 
@@ -65,11 +66,28 @@ class PostService : IPostService
 
         await connection.OpenAsync();
 
-        var query = $@"SELECT id, name
+        var query = $@"SELECT id, name, userid
                        FROM posts";
 
         var categories = await connection.QueryAsync<Post>(query);
         return categories.ToList();
+    }
+
+    public async Task<bool> UserOwnsPostAsync(int postId, int userId)
+    {
+        var post = await GetPostByIdAsync(postId);
+
+        if (post is null)
+        {
+            return false;
+        }
+
+        if (post.UserId != userId)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public async Task<bool> UpdatePostAsync(Post post)
