@@ -2,10 +2,9 @@ using blog_api_jwt.Contracts.v1;
 using blog_api_jwt.Contracts.v1.Requests;
 using blog_api_jwt.Contracts.v1.Responses;
 using blog_api_jwt.Domain;
+using blog_api_jwt.Extensions;
 using blog_api_jwt.Services.Interfaces;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace blog_api_jwt.Controllers.v1;
@@ -13,7 +12,6 @@ namespace blog_api_jwt.Controllers.v1;
 public class PostsController : Controller
 {
     private readonly IPostService _postService;
-    private readonly UserManager<User> _userManager;
 
     public PostsController(IPostService postService)
     {
@@ -23,7 +21,11 @@ public class PostsController : Controller
     [HttpPost(ApiRoutes.Posts.Create)]
     public async Task<IActionResult> Create([FromBody] CreatePostRequest request)
     {
-        var userId = HttpContext.User.Claims.SingleOrDefault(u => u.Type == "id")?.Value;
+        var userId = HttpContext.GetUserId();
+        if (userId == string.Empty)
+        {
+            return BadRequest(new { error = "You need to be logged in order to create posts" });
+        }
 
         var post = new Post
         {
@@ -48,7 +50,6 @@ public class PostsController : Controller
     public async Task<IActionResult> Get([FromRoute] int id)
     {
         var post = await _postService.GetPostByIdAsync(id);
-
         if (post is null)
         {
             return NotFound();
@@ -61,26 +62,33 @@ public class PostsController : Controller
     public async Task<IActionResult> GetAll()
     {
         var posts = await _postService.GetPostsAsync();
-
         return Ok(posts);
     }
 
     [HttpPut(ApiRoutes.Posts.Update)]
     public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdatePostRequest request)
     {
-        var userId = HttpContext.User.Claims.SingleOrDefault(u => u.Type == "id")?.Value;
-        var userOwnsPost = await _postService.UserOwnsPostAsync(id, int.Parse(userId));
+        var userId = HttpContext.GetUserId();
+        if (userId == string.Empty)
+        {
+            return BadRequest(new { error = "You need to be logged in" });
+        }
 
+        var post = await _postService.GetPostByIdAsync(id);
+        if (post is null)
+        {
+            return BadRequest(new { error = "The post does not exist" });
+        }
+
+        var userOwnsPost = await _postService.UserOwnsPostAsync(post.Id, int.Parse(userId));
         if (!userOwnsPost)
         {
             return BadRequest(new { error = "You do not own this post" });
         }
 
-        var post = await _postService.GetPostByIdAsync(id);
         post.Name = request.Name;
 
         var updated = await _postService.UpdatePostAsync(post);
-
         if (!updated)
         {
             return NotFound();
@@ -92,16 +100,19 @@ public class PostsController : Controller
     [HttpDelete(ApiRoutes.Posts.Delete)]
     public async Task<IActionResult> Delete([FromRoute] int id)
     {
-        var userId = HttpContext.User.Claims.SingleOrDefault(u => u.Type == "id")?.Value;
-        var userOwnsPost = await _postService.UserOwnsPostAsync(id, int.Parse(userId));
+        var userId = HttpContext.GetUserId();
+        if (userId == string.Empty)
+        {
+            return BadRequest(new { error = "You need to be logged in" });
+        }
 
+        var userOwnsPost = await _postService.UserOwnsPostAsync(id, int.Parse(userId));
         if (!userOwnsPost)
         {
             return BadRequest(new { error = "You do not own this post" });
         }
-        
-        var deleted = await _postService.DeletePostAsync(id);
 
+        var deleted = await _postService.DeletePostAsync(id);
         if (!deleted)
         {
             return NotFound();
