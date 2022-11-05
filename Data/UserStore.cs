@@ -47,7 +47,7 @@ public class UserStore : IQueryableUserStore<User>, IUserStore<User>, IUserEmail
                         VALUES(@{nameof(user.UserName)}, @{nameof(user.NormalizedUserName)}, @{nameof(user.Email)}, @{nameof(user.NormalizedEmail)}, @{nameof(user.EmailConfirmed)}, @{nameof(user.PasswordHash)}, @{nameof(user.PhoneNumber)}, @{nameof(user.PhoneNumberConfirmed)}, @{nameof(user.TwoFactorEnabled)})
                         RETURNING Id;";
 
-            user.Id = await connection.QuerySingleAsync<string>(query, user);
+            user.Id = await connection.QuerySingleAsync<int>(query, user);
         }
 
         return IdentityResult.Success;
