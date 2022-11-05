@@ -7,7 +7,7 @@ public static class GeneralExtensions
 {
     public static string GetUserId(this HttpContext httpContext)
     {
-        if (httpContext.User == null)
+        if (httpContext.User.Identity?.IsAuthenticated == false)
         {
             return string.Empty;
         }

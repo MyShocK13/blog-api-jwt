@@ -33,7 +33,8 @@ builder.Services.AddTransient<IUserStore<User>, UserStore>();
 builder.Services.AddTransient<IRoleStore<Role>, RoleStore>();
 
 builder.Services.AddScoped<IIdentityService, IdentityService>();
-builder.Services.AddSingleton<IPostService, PostService>();
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<ITagService, TagService>();
 
 builder.Services.AddSingleton(jwtSettings);
 

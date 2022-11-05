@@ -15,6 +15,12 @@ public static class ApiRoutes
         public const string Update = Base + "/posts/{id}";
     }
 
+    public static class Tags
+    {
+        public const string Create = Base + "/tags";
+        public const string Get = Base + "/tags/{name}";
+    }
+
     public static class Identity
     {
         public const string Register = Base + "/identity/register";
