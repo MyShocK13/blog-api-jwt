@@ -7,6 +7,8 @@ using blog_api_jwt.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using webapi.Contracts.V1.Responses;
 
@@ -25,12 +27,16 @@ public class PostsController : Controller
     [HttpPost(ApiRoutes.Posts.Create)]
     public async Task<IActionResult> Create([FromBody] CreatePostRequest request)
     {
-        var userId = HttpContext.GetUserId();
-
         var post = new Post
         {
             Name = request.Name,
-            UserId = int.Parse(userId)
+            UserId = int.Parse(HttpContext.GetUserId()),
+            Tags = request.Tags?.Select(p => new Tag
+            {
+                Name = p.ToLower(),
+                CreatorId = int.Parse(HttpContext.GetUserId()),
+                CreatedOn = DateTime.UtcNow
+            }).ToList()
         };
 
         var id = await _postService.CreatePostAsync(post);
@@ -68,8 +74,6 @@ public class PostsController : Controller
     [HttpPut(ApiRoutes.Posts.Update)]
     public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdatePostRequest request)
     {
-        var userId = HttpContext.GetUserId();
-
         var post = await _postService.GetPostByIdAsync(id);
         if (post is null)
         {
@@ -83,7 +87,7 @@ public class PostsController : Controller
             );
         }
 
-        var userOwnsPost = await _postService.UserOwnsPostAsync(post.Id, int.Parse(userId));
+        var userOwnsPost = await _postService.UserOwnsPostAsync(post.Id, int.Parse(HttpContext.GetUserId()));
         if (!userOwnsPost)
         {
             return BadRequest(
@@ -110,9 +114,7 @@ public class PostsController : Controller
     [HttpDelete(ApiRoutes.Posts.Delete)]
     public async Task<IActionResult> Delete([FromRoute] int id)
     {
-        var userId = HttpContext.GetUserId();
-
-        var userOwnsPost = await _postService.UserOwnsPostAsync(id, int.Parse(userId));
+        var userOwnsPost = await _postService.UserOwnsPostAsync(id, int.Parse(HttpContext.GetUserId()));
         if (!userOwnsPost)
         {
             return BadRequest(

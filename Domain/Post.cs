@@ -7,5 +7,5 @@ public class Post
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public int UserId { get; set; }
-    public virtual List<PostTag>? Tags { get; set; }
+    public virtual List<Tag>? Tags { get; set; }
 }

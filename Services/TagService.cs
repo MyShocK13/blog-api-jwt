@@ -18,6 +18,27 @@ class TagService : ITagService
         _connectionString = configuration.GetConnectionString("DefaultConnection");
     }
 
+    public async Task AddNewTagsFromPostAsync(Post post)
+    {
+        if (post.Tags is null)
+        {
+            return;
+        }
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        foreach (var tag in post.Tags)
+        {
+            await CreateTagAsync(tag);
+
+            var query = $@"INSERT INTO posttags (tagname, postid)
+                           VALUES (@TagName, @PostId)";
+
+            await connection.ExecuteAsync(query, new { TagName = tag.Name, PostId = post.Id });
+        }
+    }
+
     public async Task<bool> CreateTagAsync(Tag tag)
     {
         using var connection = new SqliteConnection(_connectionString);

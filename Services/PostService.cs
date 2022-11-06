@@ -12,17 +12,19 @@ namespace blog_api_jwt.Services;
 
 class PostService : IPostService
 {
+    private readonly ITagService _tagService;
     private readonly string _connectionString;
 
-    public PostService(IConfiguration configuration)
+    public PostService(ITagService tagService,
+                       IConfiguration configuration)
     {
+        _tagService = tagService;
         _connectionString = configuration.GetConnectionString("DefaultConnection");
     }
 
     public async Task<int> CreatePostAsync(Post post)
     {
         using var connection = new SqliteConnection(_connectionString);
-
         await connection.OpenAsync();
 
         var query = $@"INSERT INTO posts (name, userid)
@@ -30,6 +32,11 @@ class PostService : IPostService
                        RETURNING id;";
 
         var id = await connection.QuerySingleAsync<int>(query, post);
+
+        post.Id = id;
+
+        await _tagService.AddNewTagsFromPostAsync(post);
+
         return id;
     }
 
