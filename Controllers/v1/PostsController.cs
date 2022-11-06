@@ -6,6 +6,7 @@ using blog_api_jwt.Extensions;
 using blog_api_jwt.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using webapi.Contracts.V1.Responses;
 
 namespace blog_api_jwt.Controllers.v1;
 
@@ -24,7 +25,14 @@ public class PostsController : Controller
         var userId = HttpContext.GetUserId();
         if (userId == string.Empty)
         {
-            return BadRequest(new { error = "You need to be logged in order to create posts" });
+            return BadRequest(
+                new ErrorResponse(
+                    new ErrorModel
+                    {
+                        Message = "You need to be logged in order to create posts"
+                    }
+                )
+            );
         }
 
         var post = new Post
@@ -71,19 +79,40 @@ public class PostsController : Controller
         var userId = HttpContext.GetUserId();
         if (userId == string.Empty)
         {
-            return BadRequest(new { error = "You need to be logged in" });
+            return BadRequest(
+                new ErrorResponse(
+                    new ErrorModel
+                    {
+                        Message = "You need to be logged in"
+                    }
+                )
+            );
         }
 
         var post = await _postService.GetPostByIdAsync(id);
         if (post is null)
         {
-            return BadRequest(new { error = "The post does not exist" });
+            return BadRequest(
+                new ErrorResponse(
+                    new ErrorModel
+                    {
+                        Message = "The post does not exist"
+                    }
+                )
+            );
         }
 
         var userOwnsPost = await _postService.UserOwnsPostAsync(post.Id, int.Parse(userId));
         if (!userOwnsPost)
         {
-            return BadRequest(new { error = "You do not own this post" });
+            return BadRequest(
+                new ErrorResponse(
+                    new ErrorModel
+                    {
+                        Message = "You do not own this post"
+                    }
+                )
+            );
         }
 
         post.Name = request.Name;
@@ -103,13 +132,27 @@ public class PostsController : Controller
         var userId = HttpContext.GetUserId();
         if (userId == string.Empty)
         {
-            return BadRequest(new { error = "You need to be logged in" });
+            return BadRequest(
+                new ErrorResponse(
+                    new ErrorModel
+                    {
+                        Message = "You need to be logged in"
+                    }
+                )
+            );
         }
 
         var userOwnsPost = await _postService.UserOwnsPostAsync(id, int.Parse(userId));
         if (!userOwnsPost)
         {
-            return BadRequest(new { error = "You do not own this post" });
+            return BadRequest(
+                new ErrorResponse(
+                    new ErrorModel
+                    {
+                        Message = "You do not own this post"
+                    }
+                )
+            );
         }
 
         var deleted = await _postService.DeletePostAsync(id);
