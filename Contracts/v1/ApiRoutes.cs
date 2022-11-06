@@ -19,6 +19,7 @@ public static class ApiRoutes
     {
         public const string Create = Base + "/tags";
         public const string Get = Base + "/tags/{name}";
+        public const string GetAll = Base + "/tags";
     }
 
     public static class Identity

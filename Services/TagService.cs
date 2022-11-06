@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,13 +21,11 @@ class TagService : ITagService
     public async Task<bool> CreateTagAsync(Tag tag)
     {
         using var connection = new SqliteConnection(_connectionString);
-
         await connection.OpenAsync();
 
         tag.Name = tag.Name.ToLower();
 
         var existingTag = await GetTagByNameAsync(tag.Name);
-
         if (existingTag is not null)
         {
             return true;
@@ -45,15 +42,25 @@ class TagService : ITagService
     public async Task<Tag?> GetTagByNameAsync(string name)
     {
         using var connection = new SqliteConnection(_connectionString);
-
         await connection.OpenAsync();
 
-        var query = $@"SELECT *
+        var query = $@"SELECT name, creatorid, createdon
                        FROM tags
                        WHERE name = @Name";
 
         var tag = await connection.QuerySingleOrDefaultAsync<Tag>(query, new { Name = name });
-
         return tag;
+    }
+
+    public async Task<List<Tag>> GetTagsAsync()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var query = $@"SELECT name, creatorid, createdon
+                       FROM tags";
+
+        var tags = await connection.QueryAsync<Tag>(query);
+        return tags.ToList();
     }
 }

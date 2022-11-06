@@ -37,8 +37,6 @@ public class TagsController : Controller
         };
 
         var created = await _tagService.CreateTagAsync(tag);
-
-        created = false;
         
         if (!created)
         {
@@ -60,5 +58,29 @@ public class TagsController : Controller
         };
 
         return Created(locationUrl, response);
+    }
+
+    [HttpGet(ApiRoutes.Tags.GetAll)]
+    public async Task<IActionResult> GetAll()
+    {
+        return Ok(await _tagService.GetTagsAsync());
+    }
+
+    [HttpGet(ApiRoutes.Tags.Get)]
+    public async Task<IActionResult> Get([FromRoute] string name)
+    {
+        var tag = await _tagService.GetTagByNameAsync(name);
+
+        if (tag is null)
+        {
+            return NotFound();
+        }
+
+        var response = new TagResponse
+        {
+            Name = tag.Name
+        };
+
+        return Ok(response);
     }
 }
